@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "cloud_billing": {
+      "command": "../.venv/bin/python",
+      "args": ["-m", "mcp_servers.cloud_platform_server"],
+      "cwd": "agent",
+      "transport": "stdio"
+    }
+  }
+}
