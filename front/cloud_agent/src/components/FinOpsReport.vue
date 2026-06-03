@@ -87,10 +87,12 @@ const diagnosisText = (diagnosis: string) => {
 .finops-report {
   margin-bottom: 20px;
   padding: 20px;
-  border: 1px solid #dbe7f5;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 14px 32px rgba(15, 35, 95, 0.07);
+  border: 1px solid rgba(125, 211, 252, 0.48);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(239, 249, 255, 0.78));
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.1);
+  backdrop-filter: blur(16px);
 }
 .report-header {
   display: flex;
@@ -102,7 +104,7 @@ const diagnosisText = (diagnosis: string) => {
 .eyebrow {
   font-size: 12px;
   font-weight: 700;
-  color: #2563eb;
+  color: #0284c7;
   text-transform: uppercase;
 }
 .report-header h3 {
@@ -113,10 +115,12 @@ const diagnosisText = (diagnosis: string) => {
 .savings-card {
   min-width: 150px;
   padding: 12px 14px;
-  border-radius: 10px;
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
-  color: #166534;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(240, 253, 250, 0.96), rgba(224, 242, 254, 0.86));
+  border: 1px solid rgba(45, 212, 191, 0.46);
+  color: #0f766e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 .savings-card span,
 .metric span {
@@ -137,9 +141,9 @@ const diagnosisText = (diagnosis: string) => {
 }
 .metric {
   padding: 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(191, 219, 254, 0.52);
 }
 .metric strong {
   display: block;
@@ -152,25 +156,27 @@ const diagnosisText = (diagnosis: string) => {
   font-weight: 700;
 }
 .resource-table {
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  overflow-x: auto;
+  border: 1px solid rgba(191, 219, 254, 0.56);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
 }
 .resource-row {
   display: grid;
   grid-template-columns: 1.6fr 1.3fr 0.7fr 0.7fr 0.9fr;
   gap: 10px;
+  min-width: 640px;
   padding: 10px 12px;
   color: #334155;
   font-size: 13px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(191, 219, 254, 0.42);
 }
 .resource-row:first-child {
   border-top: 0;
 }
 .resource-head {
-  background: #f8fafc;
-  color: #64748b;
+  background: rgba(239, 246, 255, 0.76);
+  color: #475569;
   font-weight: 700;
 }
 .recommendation-list {
@@ -179,15 +185,17 @@ const diagnosisText = (diagnosis: string) => {
 }
 .recommendation {
   padding: 14px;
-  border-radius: 10px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 211, 252, 0.54);
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.9), rgba(236, 254, 255, 0.74));
 }
 .recommendation-topline {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: #1e3a8a;
+  flex-wrap: wrap;
+  color: #075985;
 }
 .recommendation p {
   margin: 8px 0;
@@ -195,7 +203,7 @@ const diagnosisText = (diagnosis: string) => {
 }
 .risk {
   font-size: 13px;
-  color: #92400e;
+  color: #b45309;
 }
 .risk-list {
   display: grid;
@@ -205,4 +213,3 @@ const diagnosisText = (diagnosis: string) => {
   font-size: 13px;
 }
 </style>
-

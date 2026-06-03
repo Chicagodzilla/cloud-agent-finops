@@ -9,6 +9,14 @@ def test_query_user_orders_returns_only_current_user_orders():
     assert {row["user_id"] for row in result["data"]} == {"user_1001"}
 
 
+def test_chicagodzilla_alias_reads_demo_account_data():
+    result = provider.query_user_orders("芝加哥斯拉", limit=10)
+
+    assert result["status"] == "success"
+    assert len(result["data"]) >= 3
+    assert {row["user_id"] for row in result["data"]} == {"user_1001"}
+
+
 def test_query_user_instances_returns_only_current_user_resources():
     result = provider.query_user_instances("user_1001", limit=10)
 

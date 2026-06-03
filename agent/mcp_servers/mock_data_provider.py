@@ -103,6 +103,14 @@ INSTANCE_MONTHLY_PRICE: dict[str, float] = {
     "rds.mysql.c1.large": 360.0,
 }
 
+USER_ID_ALIASES: dict[str, str] = {
+    "芝加哥斯拉": "user_1001",
+}
+
+
+def _canonical_user_id(user_id: str) -> str:
+    return USER_ID_ALIASES.get(user_id, user_id)
+
 
 def _metric_rows() -> list[dict[str, Any]]:
     today = date.today()
@@ -154,6 +162,7 @@ METRICS: list[dict[str, Any]] = _metric_rows()
 
 
 def query_user_orders(user_id: str, limit: int = 5) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     rows = [row for row in ORDERS if row["user_id"] == user_id]
     rows = sorted(rows, key=lambda row: row["created_at"], reverse=True)[:limit]
     if not rows:
@@ -162,6 +171,7 @@ def query_user_orders(user_id: str, limit: int = 5) -> dict[str, Any]:
 
 
 def query_user_instances(user_id: str, limit: int = 5) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     rows = [row for row in INSTANCES if row["user_id"] == user_id]
     rows = sorted(rows, key=lambda row: row["instance_id"], reverse=True)[:limit]
     if not rows:
@@ -170,6 +180,7 @@ def query_user_instances(user_id: str, limit: int = 5) -> dict[str, Any]:
 
 
 def query_monthly_bill_summary(user_id: str, billing_month: str = "2026-05") -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     rows = [
         row
         for row in ORDERS
@@ -200,6 +211,7 @@ def query_resource_cost_breakdown(
     user_id: str,
     billing_month: str = "2026-05",
 ) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     rows = [
         row
         for row in ORDERS
@@ -228,6 +240,7 @@ def query_resource_cost_breakdown(
 
 
 def query_instance_metrics(instance_id: str, user_id: str, days: int = 7) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     if not _owns_instance(instance_id, user_id):
         return {
             "status": "error",
@@ -245,6 +258,7 @@ def query_instance_metrics(instance_id: str, user_id: str, days: int = 7) -> dic
 
 
 def analyze_instance_usage(instance_id: str, user_id: str) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     metrics = query_instance_metrics(instance_id, user_id)
     if metrics["status"] != "success":
         return metrics
@@ -279,6 +293,7 @@ def estimate_savings(
     target_instance_type: str,
     user_id: str,
 ) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     instance = _find_owned_instance(instance_id, user_id)
     if not instance:
         return {
@@ -318,6 +333,7 @@ def generate_finops_report(
     billing_month: str = "2026-05",
     target_instance_type: str = "ecs.g8a.xlarge",
 ) -> dict[str, Any]:
+    user_id = _canonical_user_id(user_id)
     bill_summary = query_monthly_bill_summary(user_id, billing_month)
     instances = query_user_instances(user_id, limit=20)["data"]
     resources: list[dict[str, Any]] = []
