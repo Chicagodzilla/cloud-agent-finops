@@ -313,6 +313,89 @@ def estimate_savings(
     }
 
 
+def generate_finops_report(
+    user_id: str,
+    billing_month: str = "2026-05",
+    target_instance_type: str = "ecs.g8a.xlarge",
+) -> dict[str, Any]:
+    bill_summary = query_monthly_bill_summary(user_id, billing_month)
+    instances = query_user_instances(user_id, limit=20)["data"]
+    resources: list[dict[str, Any]] = []
+    recommendations: list[dict[str, Any]] = []
+    total_savings = 0.0
+
+    for instance in instances:
+        if not _is_finops_candidate(instance):
+            continue
+        usage = analyze_instance_usage(instance["instance_id"], user_id)
+        if usage["status"] != "success":
+            continue
+        usage_data = usage["data"]
+        metrics = usage_data["metrics_7d_avg"]
+        cost = query_resource_cost_breakdown(instance["instance_id"], user_id, billing_month)
+        cost_amount = 0.0
+        if cost["status"] == "success":
+            cost_amount = cost["data"]["total_amount"]
+        resources.append(
+            {
+                "instance_id": instance["instance_id"],
+                "instance_type": instance["instance_type"],
+                "status": instance["status"],
+                "region_id": instance["region_id"],
+                "cpu_avg_7d": metrics["cpu_usage_percent"],
+                "memory_avg_7d": metrics["memory_usage_percent"],
+                "network_peak_mbps": metrics["network_out_bandwidth_mbps"],
+                "current_month_cost": cost_amount,
+                "diagnosis": usage_data["diagnosis"],
+            }
+        )
+        if usage_data["diagnosis"] == "RESOURCES_IDLE":
+            savings = estimate_savings(instance["instance_id"], target_instance_type, user_id)
+            savings_amount = 0.0
+            if savings["status"] == "success":
+                savings_amount = savings["data"]["estimated_monthly_savings"]
+            total_savings += savings_amount
+            recommendations.append(
+                {
+                    "resource_id": instance["instance_id"],
+                    "action": "downsize",
+                    "priority": "high",
+                    "title": f"建议将 {instance['instance_type']} 降配到 {target_instance_type}",
+                    "reason": "近 7 天 CPU 与内存长期低利用率，存在明显资源闲置。",
+                    "risk": "降配前需确认业务峰值、定时任务、依赖服务和容量冗余。",
+                    "estimated_monthly_savings": round(savings_amount, 2),
+                    "currency": "CNY",
+                    "requires_approval": True,
+                }
+            )
+
+    overall_status = "has_savings_opportunity" if recommendations else "no_obvious_savings"
+    report = {
+        "type": "finops_report",
+        "summary": {
+            "title": f"{billing_month} 云资源成本优化建议",
+            "overall_status": overall_status,
+            "billing_month": billing_month,
+            "total_bill_amount": bill_summary["data"]["total_amount"],
+            "estimated_monthly_savings": round(total_savings, 2),
+            "currency": "CNY",
+        },
+        "resources": resources,
+        "recommendations": recommendations,
+        "risks": [
+            "报告中的节省金额为基于 mock 规格价格的估算值。",
+            "任何降配、关停或计费方式变更都需要人工确认后执行。",
+        ],
+        "sources": [
+            {"type": "tool", "name": "query_monthly_bill_summary"},
+            {"type": "tool", "name": "query_user_instances"},
+            {"type": "tool", "name": "analyze_instance_usage"},
+            {"type": "tool", "name": "estimate_savings"},
+        ],
+    }
+    return {"status": "success", "data": report, "source": "mock_data_provider.finops_report"}
+
+
 def _owns_instance(instance_id: str, user_id: str) -> bool:
     return _find_owned_instance(instance_id, user_id) is not None
 
@@ -323,3 +406,6 @@ def _find_owned_instance(instance_id: str, user_id: str) -> dict[str, Any] | Non
             return instance
     return None
 
+
+def _is_finops_candidate(instance: dict[str, Any]) -> bool:
+    return instance["status"] == "Running" and instance["instance_type"].startswith("ecs.")

@@ -39,3 +39,21 @@ def test_estimate_savings_returns_positive_savings_for_downsize():
     assert result["data"]["estimated_monthly_savings"] > 0
     assert result["data"]["requires_approval"] is True
 
+
+def test_generate_finops_report_builds_structured_recommendations():
+    result = provider.generate_finops_report(
+        user_id="user_1001",
+        billing_month="2026-05",
+        target_instance_type="ecs.g8a.xlarge",
+    )
+
+    assert result["status"] == "success"
+    report = result["data"]
+    assert report["type"] == "finops_report"
+    assert report["summary"]["overall_status"] == "has_savings_opportunity"
+    assert report["summary"]["estimated_monthly_savings"] == 820.0
+    assert report["resources"][0]["instance_id"] == "i-bp1_user1001_ecs"
+    assert report["recommendations"][0]["action"] == "downsize"
+    assert report["recommendations"][0]["requires_approval"] is True
+    assert "确认业务峰值" in report["recommendations"][0]["risk"]
+    assert {"type": "tool", "name": "estimate_savings"} in report["sources"]

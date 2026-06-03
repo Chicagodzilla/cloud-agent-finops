@@ -543,6 +543,35 @@ def estimate_savings(
     })
 
 
+@mcp.tool()
+def generate_finops_report(
+    user_id: str,
+    billing_month: str = "2026-05",
+    target_instance_type: str = "ecs.g8a.xlarge",
+) -> str:
+    """
+    生成结构化 FinOps 成本优化报告，包含账单总览、资源诊断、建议动作、风险和来源。
+
+    Args:
+        user_id: [系统注入] 当前用户 ID。
+        billing_month: 账单月份，格式如 "2026-05"。
+        target_instance_type: 降配建议的目标实例规格。
+    """
+    if use_mock_data():
+        return dumps(
+            mock_data_provider.generate_finops_report(
+                user_id=user_id,
+                billing_month=billing_month,
+                target_instance_type=target_instance_type,
+            )
+        )
+    return dumps({
+        "status": "not_supported",
+        "message": "当前 MySQL 模式暂未配置完整 FinOps 报告生成所需的数据源。",
+        "data": None,
+    })
+
+
 def get_legacy_promotion_materials(product_name: str, user_id: str = "") -> str:
     """
     根据产品名称获取对应的推广海报、专属推广链接和返佣活动信息。

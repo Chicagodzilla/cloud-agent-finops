@@ -3,6 +3,7 @@ import json
 from mcp_servers.cloud_platform_server import (
     analyze_instance_usage,
     estimate_savings,
+    generate_finops_report,
     query_instance_metrics,
     query_monthly_bill_summary,
     query_resource_cost_breakdown,
@@ -94,3 +95,20 @@ def test_mcp_estimate_savings_returns_approval_required(monkeypatch):
     assert result["status"] == "success"
     assert result["data"]["estimated_monthly_savings"] == 820.0
     assert result["data"]["requires_approval"] is True
+
+
+def test_mcp_generate_finops_report_returns_structured_payload(monkeypatch):
+    monkeypatch.setenv("MOCK_DATA_MODE", "true")
+
+    result = parse(
+        generate_finops_report(
+            user_id="user_1001",
+            billing_month="2026-05",
+            target_instance_type="ecs.g8a.xlarge",
+        )
+    )
+
+    assert result["status"] == "success"
+    assert result["data"]["type"] == "finops_report"
+    assert result["data"]["summary"]["estimated_monthly_savings"] == 820.0
+    assert result["data"]["recommendations"][0]["action"] == "downsize"

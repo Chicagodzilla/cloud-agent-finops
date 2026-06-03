@@ -52,6 +52,7 @@ class FinOpsAgentNode:
             "query_instance_metrics",
             "analyze_instance_usage",
             "estimate_savings",
+            "generate_finops_report",
         ]
         tools = [t for t in all_tools if t.name in target_tools]
         
@@ -64,7 +65,8 @@ class FinOpsAgentNode:
 3. 如果上下文中没有 instance_id，调用 `query_user_instances` 获取该用户实例列表，并优先选择 Running 状态的 ECS 实例继续分析；如果有多台实例，可先给出清单并建议用户指定目标。
 4. 对目标实例调用 `query_resource_cost_breakdown` 查询资源级费用，再调用 `query_instance_metrics` 和 `analyze_instance_usage` 获取近 7 天监控数据与诊断结论。
 5. 如果诊断为 `RESOURCES_IDLE`，可以建议降配；但涉及“每月可节省多少钱”时必须调用 `estimate_savings`，严禁自己估算或编造金额。
-6. 以云架构师的口吻给用户提出**降本增效建议**：
+6. 如果用户要求“报告”“总结”“完整建议”或你已经完成上述分析，优先调用 `generate_finops_report` 生成结构化 FinOps 报告，再基于报告向用户解释。
+7. 以云架构师的口吻给用户提出**降本增效建议**：
    - 明确说明依据：账单摘要、资源费用、CPU/内存/带宽监控、工具返回的诊断。
    - 给出建议动作：降配、保留观察、停止闲置资源、购买更合适计费方式等。
    - 标明风险：任何降配/关停都需要人工确认，先确认业务峰值、定时任务和依赖服务。
