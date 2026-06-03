@@ -72,6 +72,7 @@
                       <span>资源优化与降本</span>
                     </div>
                     <div class="scenario-list">
+                      <div class="scenario-item primary" @click="loadFinOpsReport">生成结构化成本优化报告</div>
                       <div class="scenario-item" @click="sendQuery('获取近7天CPU/内存/带宽数据并做降本建议')">获取近7天资源监控并做降本建议</div>
                       <div class="scenario-item" @click="sendQuery('服务器利用率低，怎么省钱？')">服务器利用率低，怎么省钱？</div>
                     </div>
@@ -103,6 +104,8 @@
             </div>
             <div class="message-bubble" v-html="renderMarkdown(msg.content)"></div>
           </div>
+
+          <FinOpsReport v-if="finOpsReport" :report="finOpsReport" />
           
           <div v-if="isLoading" class="message-row assistant">
              <div class="msg-avatar ai-avatar">AI</div>
@@ -141,12 +144,15 @@
 import { ref, nextTick, onMounted } from 'vue'
 import { Plus, ChatDotRound, Service, Position, Loading, Monitor, List, DataLine, Share } from '@element-plus/icons-vue'
 import { marked } from 'marked'
+import FinOpsReport from './components/FinOpsReport.vue'
+import type { FinOpsReport as FinOpsReportData, FinOpsReportResponse } from './types/finops'
 
 // 状态定义
 const inputQuery = ref('')
 const isLoading = ref(false)
 const messageListRef = ref<HTMLElement | null>(null)
 const currentSessionId = ref('session_default_1')
+const finOpsReport = ref<FinOpsReportData | null>(null)
 
 interface Message {
   role: 'user' | 'assistant'
@@ -170,12 +176,14 @@ const createNewSession = () => {
   sessions.value.unshift({ id: newId, name: '新对话' })
   currentSessionId.value = newId
   messages.value = []
+  finOpsReport.value = null
 }
 
 const switchSession = (id: string) => {
   if (currentSessionId.value === id) return
   currentSessionId.value = id
   messages.value = [] // 实际应从本地或后端拉取该 session 的历史
+  finOpsReport.value = null
 }
 
 const renderMarkdown = (text: string) => {
@@ -270,8 +278,49 @@ const sendQuery = async (query: string) => {
   } catch (error) {
     console.error('API Error:', error)
     if (messages.value[currentMsgIndex]) {
-      messages.value[currentMsgIndex].content = '❌ 请求失败，请检查后端服务是否启动 (FastAPI port 5000)。'
+      messages.value[currentMsgIndex].content = '❌ 请求失败，请检查后端服务是否启动 (FastAPI port 5001)。'
     }
+  } finally {
+    isLoading.value = false
+    scrollToBottom()
+  }
+}
+
+const loadFinOpsReport = async () => {
+  isLoading.value = true
+  finOpsReport.value = null
+  messages.value.push({ role: 'user', content: '生成一份结构化云资源成本优化报告' })
+  scrollToBottom()
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/finops/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: 'user_1001',
+        billing_month: '2026-05',
+        target_instance_type: 'ecs.g8a.xlarge'
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const payload = (await response.json()) as FinOpsReportResponse
+    finOpsReport.value = payload.data
+    messages.value.push({
+      role: 'assistant',
+      content: `已生成 ${payload.data.summary.billing_month} 的结构化 FinOps 报告，预计月节省 ${payload.data.summary.currency} ${payload.data.summary.estimated_monthly_savings.toLocaleString('zh-CN')}。`
+    })
+  } catch (error) {
+    console.error('FinOps report error:', error)
+    messages.value.push({
+      role: 'assistant',
+      content: '❌ 成本优化报告生成失败，请确认后端服务是否启动。'
+    })
   } finally {
     isLoading.value = false
     scrollToBottom()
@@ -470,6 +519,17 @@ const sendQuery = async (query: string) => {
   border-color: #93c5fd;
   color: #2563eb;
   transform: translateY(-2px);
+}
+.scenario-item.primary {
+  border-color: #86efac;
+  background: #ecfdf5;
+  color: #166534;
+  font-weight: 700;
+}
+.scenario-item.primary:hover {
+  border-color: #22c55e;
+  background: #dcfce7;
+  color: #14532d;
 }
 
 .message-row {
